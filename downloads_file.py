@@ -20,20 +20,25 @@ class FileHandler(FileSystemEventHandler):
         for root, dirs, files in os.walk(os.path.expanduser('~') + '/Downloads'):
             for file in files:
                 _, ext = os.path.splitext(file)
-                src_path, dest_path = None, None
+                src_path, dest_folder = None, None
                 if ext.lower() in FILE_TYPES['Documents']:
                     src_path = os.path.join(root, file)
-                    dest_path = os.path.join(os.path.expanduser('~'), 'Documents', 'Downloads', file)
+                    dest_folder = os.path.join(os.path.expanduser('~'), 'Documents', 'Downloads', ext.lower()[1:])
                 elif ext.lower() in FILE_TYPES['Pictures']:
                     src_path = os.path.join(root, file)
-                    dest_path = os.path.join(os.path.expanduser('~'), 'Pictures', 'Downloads', file)
+                    dest_folder = os.path.join(os.path.expanduser('~'), 'Pictures', 'Downloads')
                 elif ext.lower() in FILE_TYPES['Videos']:
                     src_path = os.path.join(root, file)
-                    dest_path = os.path.join(os.path.expanduser('~'), 'Videos', 'Downloads', file)
+                    dest_folder = os.path.join(os.path.expanduser('~'), 'Videos', 'Downloads')
                 elif ext.lower() in FILE_TYPES['Music']:
                     src_path = os.path.join(root, file)
-                    dest_path = os.path.join(os.path.expanduser('~'), 'Music', 'Downloads', file)
-                if src_path and dest_path:
+                    dest_folder = os.path.join(os.path.expanduser('~'), 'Music', 'Downloads')
+                if src_path and dest_folder:
+                    # Does dest_folder exist?
+                    if not os.path.exists(dest_folder):
+                        print(f"Creating {dest_folder}")
+                        os.makedirs(dest_folder)
+                    dest_path = os.path.join(dest_folder, file)
                     print(f"Replacing {src_path} with {dest_path}")
                     shutil.move(src_path, dest_path)
                     print(f"Moved {src_path} to {dest_path}")
@@ -43,11 +48,11 @@ class FileHandler(FileSystemEventHandler):
         _, ext = os.path.splitext(event.src_path)
 
         # Define the destination folder based on the extension
-        if ext.lower() in ['.pdf', '.csv']:
-            dest_folder = os.path.join(os.path.expanduser('~'), 'Documents')
-        else:
-            # Add more extensions and destinations as needed
-            return
+        if ext.lower() in FILE_TYPES['Documents']:
+            dest_folder = os.path.join(os.path.expanduser('~'), 'Documents', 'Downloads', ext.lower()[1:])
+            # check if 'Downloads' folder exists if not create one
+            if not os.path.exists(dest_folder):
+                os.makedirs(dest_folder)
 
         # Move the file to the destination folder
         dest_path = os.path.join(dest_folder, os.path.basename(event.src_path))
