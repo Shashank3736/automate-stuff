@@ -1,7 +1,7 @@
 import os
 import shutil
 from watchdog.observers import Observer
-from watchdog.events import FileSystemEventHandler
+from watchdog.events import FileSystemEvent, FileSystemEventHandler
 
 # Define all file types in json format
 FILE_TYPES = {
@@ -33,6 +33,9 @@ class FileHandler(FileSystemEventHandler):
                 elif ext.lower() in FILE_TYPES['Music']:
                     src_path = os.path.join(root, file)
                     dest_folder = os.path.join(os.path.expanduser('~'), 'Music', 'Downloads')
+                elif ext.lower() in FILE_TYPES['Compressed']:
+                    src_path = os.path.join(root, file)
+                    dest_folder = os.path.join(os.path.expanduser('~'), 'Documents', 'Downloads', 'Compressed')
                 if src_path and dest_folder:
                     # Does dest_folder exist?
                     if not os.path.exists(dest_folder):
@@ -50,14 +53,37 @@ class FileHandler(FileSystemEventHandler):
         # Define the destination folder based on the extension
         if ext.lower() in FILE_TYPES['Documents']:
             dest_folder = os.path.join(os.path.expanduser('~'), 'Documents', 'Downloads', ext.lower()[1:])
-            # check if 'Downloads' folder exists if not create one
-            if not os.path.exists(dest_folder):
-                os.makedirs(dest_folder)
+        elif ext.lower() in FILE_TYPES['Pictures']:
+            dest_folder = os.path.join(os.path.expanduser('~'), 'Pictures', 'Downloads')
+        elif ext.lower() in FILE_TYPES['Videos']:
+            dest_folder = os.path.join(os.path.expanduser('~'), 'Videos', 'Downloads')
+        elif ext.lower() in FILE_TYPES['Music']:
+            dest_folder = os.path.join(os.path.expanduser('~'), 'Music', 'Downloads')
+        elif ext.lower() in FILE_TYPES['Compressed']:
+            dest_folder = os.path.join(os.path.expanduser('~'), 'Documents', 'Downloads', 'Compressed')
+        else:
+            return
+        # check if 'Downloads' folder exists if not create one
+        print(f"Checking {dest_folder}")
+        if not os.path.exists(dest_folder):
+            os.makedirs(dest_folder)
 
         # Move the file to the destination folder
-        dest_path = os.path.join(dest_folder, os.path.basename(event.src_path))
-        shutil.move(event.src_path, dest_path)
-        print(f"Moved {event.src_path} to {dest_path}")
+        try:
+            dest_path = os.path.join(dest_folder, os.path.basename(event.src_path))
+            shutil.move(event.src_path, dest_path)
+            print(f"Moved {event.src_path} to {dest_path}")
+        except Exception as e:
+            print(f"Error moving {event.src_path}: {e}")
+    
+    def on_modified(self, event: FileSystemEvent) -> None:
+        # super().on_modified(event)
+        print(f"File {event.src_path} modified.")
+        # check if after modification file exist or not
+        if not os.path.exists(event.src_path):
+            print(f"File {event.src_path} deleted.")
+            return
+        return self.on_created(event)
 
 if __name__ == "__main__":
     downloads_folder = os.path.join(os.path.expanduser('~'), 'Downloads')
