@@ -19,6 +19,10 @@ class FileHandler(FileSystemEventHandler):
         # Check all the files and replace if they are .pdf or .csv
         # for root, dirs, files in os.walk(os.path.expanduser('~') + '/Downloads'):
         for file in os.listdir(os.path.expanduser('~') + '/Downloads'):
+            # check if the it is a file or directory
+            if os.path.isdir(os.path.join(os.path.expanduser('~'), 'Downloads', file)):
+                continue
+            # Get the file extension
             _, ext = os.path.splitext(file)
             dest_folder = None
             if ext.lower() in FILE_TYPES['Documents']:
@@ -42,6 +46,8 @@ class FileHandler(FileSystemEventHandler):
                 shutil.move(src_path, dest_path)
                 print(f"Moved {src_path} to {dest_path}")
     def on_created(self, event):
+        if os.path.isdir(event.src_path):
+            return
         print(f"File {event.src_path} created.")
         # Get the file extension
         _, ext = os.path.splitext(event.src_path)
