@@ -17,34 +17,30 @@ class FileHandler(FileSystemEventHandler):
     def __init__(self):
         super().__init__()
         # Check all the files and replace if they are .pdf or .csv
-        for root, dirs, files in os.walk(os.path.expanduser('~') + '/Downloads'):
-            for file in files:
-                _, ext = os.path.splitext(file)
-                src_path, dest_folder = None, None
-                if ext.lower() in FILE_TYPES['Documents']:
-                    src_path = os.path.join(root, file)
-                    dest_folder = os.path.join(os.path.expanduser('~'), 'Documents', 'Downloads', ext.lower()[1:])
-                elif ext.lower() in FILE_TYPES['Pictures']:
-                    src_path = os.path.join(root, file)
-                    dest_folder = os.path.join(os.path.expanduser('~'), 'Pictures', 'Downloads')
-                elif ext.lower() in FILE_TYPES['Videos']:
-                    src_path = os.path.join(root, file)
-                    dest_folder = os.path.join(os.path.expanduser('~'), 'Videos', 'Downloads')
-                elif ext.lower() in FILE_TYPES['Music']:
-                    src_path = os.path.join(root, file)
-                    dest_folder = os.path.join(os.path.expanduser('~'), 'Music', 'Downloads')
-                elif ext.lower() in FILE_TYPES['Compressed']:
-                    src_path = os.path.join(root, file)
-                    dest_folder = os.path.join(os.path.expanduser('~'), 'Documents', 'Downloads', 'Compressed')
-                if src_path and dest_folder:
-                    # Does dest_folder exist?
-                    if not os.path.exists(dest_folder):
-                        print(f"Creating {dest_folder}")
-                        os.makedirs(dest_folder)
-                    dest_path = os.path.join(dest_folder, file)
-                    print(f"Replacing {src_path} with {dest_path}")
-                    shutil.move(src_path, dest_path)
-                    print(f"Moved {src_path} to {dest_path}")
+        # for root, dirs, files in os.walk(os.path.expanduser('~') + '/Downloads'):
+        for file in os.listdir(os.path.expanduser('~') + '/Downloads'):
+            _, ext = os.path.splitext(file)
+            dest_folder = None
+            if ext.lower() in FILE_TYPES['Documents']:
+                dest_folder = os.path.join(os.path.expanduser('~'), 'Documents', 'Downloads', ext.lower()[1:])
+            elif ext.lower() in FILE_TYPES['Pictures']:
+                dest_folder = os.path.join(os.path.expanduser('~'), 'Pictures', 'Downloads')
+            elif ext.lower() in FILE_TYPES['Videos']:
+                dest_folder = os.path.join(os.path.expanduser('~'), 'Videos', 'Downloads')
+            elif ext.lower() in FILE_TYPES['Music']:
+                dest_folder = os.path.join(os.path.expanduser('~'), 'Music', 'Downloads')
+            elif ext.lower() in FILE_TYPES['Compressed']:
+                dest_folder = os.path.join(os.path.expanduser('~'), 'Documents', 'Downloads', 'Compressed')
+            src_path = os.path.join(os.path.expanduser('~'), 'Downloads', file)
+            if src_path and dest_folder:
+                # Does dest_folder exist?
+                if not os.path.exists(dest_folder):
+                    print(f"Creating {dest_folder}")
+                    os.makedirs(dest_folder)
+                dest_path = os.path.join(dest_folder, file)
+                print(f"Replacing {src_path} with {dest_path}")
+                shutil.move(src_path, dest_path)
+                print(f"Moved {src_path} to {dest_path}")
     def on_created(self, event):
         print(f"File {event.src_path} created.")
         # Get the file extension
