@@ -2,6 +2,7 @@ import os
 import shutil
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEvent, FileSystemEventHandler
+import datetime
 
 # Define all file types in json format
 FILE_TYPES = {
@@ -12,6 +13,11 @@ FILE_TYPES = {
     'Compressed': ['.zip', '.rar', '.7z', '.tar', '.gz', '.bz2', '.xz', '.tgz', '.rpm', '.deb'],
     'Apps': ['.exe', '.dmg', '.pkg', '.deb', '.rpm', '.app', '.msi', '.appx', '.appxbundle'],
 }
+
+def log(message: str):
+    "Print message with date and time"
+    print(f"[{datetime.datetime.now():%Y-%m-%d %H:%M:%S}] {message}")
+
 
 class FileHandler(FileSystemEventHandler):
     def __init__(self):
@@ -39,16 +45,16 @@ class FileHandler(FileSystemEventHandler):
             if src_path and dest_folder:
                 # Does dest_folder exist?
                 if not os.path.exists(dest_folder):
-                    print(f"Creating {dest_folder}")
+                    log(f"Creating {dest_folder}")
                     os.makedirs(dest_folder)
                 dest_path = os.path.join(dest_folder, file)
-                print(f"Replacing {src_path} with {dest_path}")
+                log(f"Replacing {src_path} with {dest_path}")
                 shutil.move(src_path, dest_path)
-                print(f"Moved {src_path} to {dest_path}")
+                log(f"Moved {src_path} to {dest_path}")
     def on_created(self, event):
         if os.path.isdir(event.src_path):
             return
-        print(f"File {event.src_path} created.")
+        log(f"File {event.src_path} created.")
         # Get the file extension
         _, ext = os.path.splitext(event.src_path)
 
@@ -66,7 +72,7 @@ class FileHandler(FileSystemEventHandler):
         else:
             return
         # check if 'Downloads' folder exists if not create one
-        print(f"Checking {dest_folder}")
+        log(f"Checking {dest_folder}")
         if not os.path.exists(dest_folder):
             os.makedirs(dest_folder)
 
@@ -74,16 +80,16 @@ class FileHandler(FileSystemEventHandler):
         try:
             dest_path = os.path.join(dest_folder, os.path.basename(event.src_path))
             shutil.move(event.src_path, dest_path)
-            print(f"Moved {event.src_path} to {dest_path}")
+            log(f"Moved {event.src_path} to {dest_path}")
         except Exception as e:
-            print(f"Error moving {event.src_path}: {e}")
+            log(f"Error moving {event.src_path}: {e}")
     
     def on_modified(self, event: FileSystemEvent) -> None:
         # super().on_modified(event)
-        print(f"File {event.src_path} modified.")
+        log(f"File {event.src_path} modified.")
         # check if after modification file exist or not
         if not os.path.exists(event.src_path):
-            print(f"File {event.src_path} deleted.")
+            log(f"File {event.src_path} deleted.")
             return
         return self.on_created(event)
 
