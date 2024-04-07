@@ -14,16 +14,18 @@ FILE_TYPES = {
     'Apps': ['.exe', '.dmg', '.pkg', '.deb', '.rpm', '.app', '.msi', '.appx', '.appxbundle'],
 }
 
+LOGS_FOLDER = "F:/automate-stuff/logs"
+
 def log(message: str):
     """
     Save logs in a file downloads_file.log in this folder
     """
     # Check if folder exist or not. If not create one.
-    if not os.path.exists(f'logs/{datetime.datetime.today().strftime("%Y-%m-%d")}'):
-        os.makedirs(f'logs/{datetime.datetime.today().strftime("%Y-%m-%d")}')
+    if not os.path.exists(f'{LOGS_FOLDER}/{datetime.datetime.today().strftime("%Y-%m-%d")}'):
+        os.makedirs(f'{LOGS_FOLDER}/{datetime.datetime.today().strftime("%Y-%m-%d")}')
     
     # Open or create and open file and add the logs
-    with open(f'logs/{datetime.datetime.today().strftime("%Y-%m-%d")}/download_file.log', 'a') as f:
+    with open(f'{LOGS_FOLDER}/{datetime.datetime.today().strftime("%Y-%m-%d")}/download_file.log', 'a') as f:
         f.write(f"[{datetime.datetime.now():%Y-%m-%d %H:%M:%S}] {message}\n")
     
     # print the logs in terminal
