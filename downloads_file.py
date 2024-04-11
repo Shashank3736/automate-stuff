@@ -2,7 +2,7 @@ import os
 import shutil
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEvent, FileSystemEventHandler
-import datetime
+import datetime, time, threading
 
 # Define all file types in json format
 FILE_TYPES = {
@@ -15,6 +15,7 @@ FILE_TYPES = {
 }
 
 LOGS_FOLDER = "F:/automate-stuff/logs"
+WAITING_TIME_IN_SECONDS = 60
 
 def log(message: str):
     """
@@ -42,34 +43,33 @@ class FileHandler(FileSystemEventHandler):
             if os.path.isdir(os.path.join(os.path.expanduser('~'), 'Downloads', file)):
                 continue
             # Get the file extension
-            _, ext = os.path.splitext(file)
-            dest_folder = None
-            if ext.lower() in FILE_TYPES['Documents']:
-                dest_folder = os.path.join(os.path.expanduser('~'), 'Documents', 'Downloads', ext.lower()[1:])
-            elif ext.lower() in FILE_TYPES['Pictures']:
-                dest_folder = os.path.join(os.path.expanduser('~'), 'Pictures', 'Downloads')
-            elif ext.lower() in FILE_TYPES['Videos']:
-                dest_folder = os.path.join(os.path.expanduser('~'), 'Videos', 'Downloads')
-            elif ext.lower() in FILE_TYPES['Music']:
-                dest_folder = os.path.join(os.path.expanduser('~'), 'Music', 'Downloads')
-            elif ext.lower() in FILE_TYPES['Compressed']:
-                dest_folder = os.path.join(os.path.expanduser('~'), 'Documents', 'Downloads', 'Compressed')
-            src_path = os.path.join(os.path.expanduser('~'), 'Downloads', file)
-            if src_path and dest_folder:
-                # Does dest_folder exist?
-                if not os.path.exists(dest_folder):
-                    log(f"Creating {dest_folder}")
-                    os.makedirs(dest_folder)
-                dest_path = os.path.join(dest_folder, file)
-                log(f"Replacing {src_path} with {dest_path}")
-                shutil.move(src_path, dest_path)
-                log(f"Moved {src_path} to {dest_path}")
+            thread = threading.Thread(target=self.check_file_and_change_path, args=(os.path.join(os.path.expanduser('~'), 'Downloads', file), ))
+            thread.start()
     def on_created(self, event):
         if os.path.isdir(event.src_path):
             return
+        # Wait for 5 seconds
         log(f"File {event.src_path} created.")
         # Get the file extension
-        _, ext = os.path.splitext(event.src_path)
+        thread = threading.Thread(target=self.check_file_and_change_path, args=(event.src_path, ))
+        thread.start()
+    
+    def on_modified(self, event: FileSystemEvent) -> None:
+        if not os.path.exists(event.src_path) or event.event_type == 'created':
+            return
+        # super().on_modified(event)
+        log(f"File {event.src_path} modified.")
+        # check if after modification file exist or not
+        thread = threading.Thread(target=self.check_file_and_change_path, args=(event.src_path, ))
+        thread.start()
+    
+    def check_file_and_change_path(self, src_path: str):
+        # check if file exist or not
+        if not os.path.exists(src_path):
+            log(f"File {src_path} do not exist.")
+            return
+        # Get the file extension
+        _, ext = os.path.splitext(src_path)
 
         # Define the destination folder based on the extension
         if ext.lower() in FILE_TYPES['Documents']:
@@ -85,26 +85,19 @@ class FileHandler(FileSystemEventHandler):
         else:
             return
         # check if 'Downloads' folder exists if not create one
-        log(f"Checking {dest_folder}")
         if not os.path.exists(dest_folder):
+            log(f"Creating {dest_folder} as it does not exists.")
             os.makedirs(dest_folder)
 
         # Move the file to the destination folder
         try:
-            dest_path = os.path.join(dest_folder, os.path.basename(event.src_path))
-            shutil.move(event.src_path, dest_path)
-            log(f"Moved {event.src_path} to {dest_path}")
+            dest_path = os.path.join(dest_folder, os.path.basename(src_path))
+            log(f"Waiting 5 seconds before moving {src_path} to {dest_path}")
+            time.sleep(WAITING_TIME_IN_SECONDS)
+            shutil.move(src_path, dest_path)
+            log(f"Moved {src_path} to {dest_path}")
         except Exception as e:
-            log(f"Error moving {event.src_path}: {e}")
-    
-    def on_modified(self, event: FileSystemEvent) -> None:
-        # super().on_modified(event)
-        log(f"File {event.src_path} modified.")
-        # check if after modification file exist or not
-        if not os.path.exists(event.src_path):
-            log(f"File {event.src_path} deleted.")
-            return
-        return self.on_created(event)
+            log(f"Error moving {src_path}: {e}")
 
 if __name__ == "__main__":
     downloads_folder = os.path.join(os.path.expanduser('~'), 'Downloads')
